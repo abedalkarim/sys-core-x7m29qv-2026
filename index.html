@@ -165,6 +165,7 @@ function vSet(){var b=cb(),s='S.br['+sel+']';
  if(up)h+='<div class="card"><h2>⬆️ رفع بيانات هذا الجهاز</h2><div class="hint">اضغط مرة واحدة فقط، من الهاتف الذي فيه بياناتك القديمة. لا تضغطه من هاتف آخر.</div><button class="btn" onclick="upLocal()">رفع البيانات إلى السحابة</button><div id="um" class="hint"></div></div>';
  return h}
 render();setTimeout(function(){if(!loaded&&!(auth&&!user)){stuck=true;render()}},8000);loadFb().then(init,function(){fbFail=true;render()});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
 </script>
 </body>
 </html>
