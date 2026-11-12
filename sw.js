@@ -1,4 +1,4 @@
-var C='sweets-v7';
+var C='sweets-v8';
 var CORE=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png'];
 var CDN=['https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js','https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'];
 self.addEventListener('install',function(e){

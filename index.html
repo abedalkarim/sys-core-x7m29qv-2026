@@ -48,7 +48,7 @@ var LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAK
 (function(){document.querySelectorAll('.lg').forEach(function(e){e.src=LOGO});['icon','apple-touch-icon'].forEach(function(r){var l=document.createElement('link');l.rel=r;l.href=ICON;if(r==='icon')l.type='image/png';document.head.appendChild(l)});setTimeout(function(){var s=document.getElementById('splash');s.classList.add('off');setTimeout(function(){s.remove()},600)},1300)})();
 var KEY='sweets_v1',tab='today',date=today(),month=today().slice(0,7),sel=0,unlocked=false,fg=0;
 var DN=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-function nb(i){return{n:i?'الفرع الثاني':'الفرع الأول',p:{n:'الصنف',pr:0,co:0},f:{rent:0,work:0,ewk:0,oth:0},wd:i?[0,1,2,3,4,5,6]:[0,1,2,3,4,6],d:{}}}
+function nb(i){return{n:i?'الفرع الثاني':'الفرع الأول',p:{n:'الصنف',pr:0,co:0},f:{rent:0,work:0},wd:i?[0,1,2,3,4,5,6]:[0,1,2,3,4,6],d:{}}}
 var S={cur:'',br:[nb(0),nb(1)]};
 
 var fbFail=false,stuck=false;
@@ -67,7 +67,7 @@ function startSync(){ready={c:false,d:false};
  unsubs.push(db.collection('days').onSnapshot(function(q){S.br.forEach(function(b){b.d={}});q.forEach(function(d){var x=d.data();if(S.br[x.b])S.br[x.b].d[x.date]={a:x.a,pr:x.pr,co:x.co,x:x.x||[]}});ready.d=true;after(q)},onErr))}
 function init(){if(typeof firebase==='undefined'){fbFail=true;render();return}try{
  firebase.initializeApp(FBCFG);db=firebase.firestore();auth=firebase.auth();try{db.enablePersistence().catch(function(){})}catch(e){}
- auth.onAuthStateChanged(function(u){user=u;unsubs.forEach(function(f){f()});unsubs=[];loaded=false;loadErr='';if(u)startSync();render()})}catch(e){fbFail=true;loadErr='init: '+(e&&e.message||e);render()}}
+ auth.onAuthStateChanged(function(u){user=u;unlocked=false;unsubs.forEach(function(f){f()});unsubs=[];loaded=false;loadErr='';if(u)startSync();render()})}catch(e){fbFail=true;loadErr='init: '+(e&&e.message||e);render()}}
 function vLogin(){document.getElementById('nav').innerHTML='';document.getElementById('app').innerHTML='<div class="card lock"><img class="lg" src="'+LOGO+'" alt=""><h2 style="text-align:center">تسجيل الدخول</h2><label>الإيميل</label><input id="em1" type="email" autocomplete="username" dir="ltr"><label>كلمة المرور</label><input id="pw1" type="password" autocomplete="current-password" dir="ltr" onkeydown="if(event.keyCode==13)doLogin()"><div id="le" class="hint neg"></div><button class="btn" onclick="doLogin()">دخول</button></div>'}
 function doLogin(){if(!auth){location.reload();return}var e=document.getElementById('em1').value.trim(),p=document.getElementById('pw1').value,m=document.getElementById('le');
  if(!e||!p){m.className='hint neg';m.textContent='اكتب الإيميل وكلمة المرور';return}
@@ -95,12 +95,12 @@ function dim(ym){var p=ym.split('-');return new Date(+p[0],+p[1],0).getDate()}
 function wdc(b,ym){var p=ym.split('-'),c=0,m=dim(ym);for(var d=1;d<=m;d++)if(b.wd.indexOf(new Date(+p[0],+p[1]-1,d).getDay())>-1)c++;return c}
 function isW(b,dt){var p=dt.split('-');return b.wd.indexOf(new Date(+p[0],+p[1]-1,+p[2]).getDay())>-1}
 function dn(dt){var p=dt.split('-');return DN[new Date(+p[0],+p[1]-1,+p[2]).getDay()]}
-function fxm(b,ym){var f=b.f;return n(f.rent)+n(f.work)+n(f.oth)+n(f.ewk)*dim(ym)/7}
+function fxm(b,ym){var f=b.f;return n(f.rent)+n(f.work)}
 function dfx(b,dt){var ym=dt.slice(0,7),c=wdc(b,ym);return isW(b,dt)&&c?fxm(b,ym)/c:0}
 function mon(b,ym){var t={rev:0,cost:0,x:0,kg:0,rows:''};
  Object.keys(b.d).sort().forEach(function(k){if(k.slice(0,7)!==ym)return;var c=dayCalc(b.d[k]);t.rev+=c.rev;t.cost+=c.cost;t.x+=c.x;t.kg+=c.kg;var nt=c.gp-c.x-dfx(b,k);
   t.rows+='<tr><td>'+k.slice(8)+'</td><td>'+fm(c.rev)+'</td><td class="'+cl(c.gp)+'">'+fm(c.gp)+'</td><td class="'+cl(nt)+'">'+fm(nt)+'</td></tr>'});
- t.gp=t.rev-t.cost;t.el=n(b.f.ewk)*dim(ym)/7;t.fx=fxm(b,ym);t.net=t.gp-t.fx-t.x;return t}
+ t.gp=t.rev-t.cost;t.fx=fxm(b,ym);t.net=t.gp-t.fx-t.x;return t}
 async function exportRep(){var em=document.getElementById('em'),d=null;try{d=await claude.use('downloads')}catch(e){}
  var sv=d?function(n,h){return d.save({filename:n,data:h})}:function(n,h){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([h],{type:'text/html'}));a.download=n;document.body.appendChild(a);a.click();a.remove();return Promise.resolve()};
  var c=document.getElementById('app').cloneNode(true);c.querySelectorAll('.noprint').forEach(function(e){e.remove()});
@@ -108,20 +108,28 @@ async function exportRep(){var em=document.getElementById('em'),d=null;try{d=awa
  var html='<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تقرير '+esc(nm)+' '+month+'</title><style>body{font-family:system-ui,Tahoma,Arial,sans-serif;max-width:640px;margin:0 auto;padding:16px;color:#000;background:#fff}h1{font-size:20px}h2{font-size:16px}.card{border:1px solid #ccc;border-radius:10px;padding:12px;margin-bottom:12px;break-inside:avoid}.line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #ccc}.tot{font-weight:700}.pos{color:#15803d}.neg{color:#b91c1c}.hint{font-size:12px;color:#555}table{width:100%;border-collapse:collapse}th,td{padding:6px;text-align:center;border-bottom:1px solid #ccc}@media print{.pb{display:none}}</style></head><body><h1>تقرير '+esc(nm)+' — '+month+'</h1>'+c.innerHTML+'<button class="pb" onclick="print()" style="padding:10px 16px;font-size:16px">🖨️ طباعة / حفظ PDF</button></body></html>';
  try{await sv('report-'+month+'.html',html);em.textContent='تم حفظ الملف. افتحه في المتصفح ثم اختر طباعة وحفظ كـ PDF.'}catch(e){if(!e||e.code!=='declined')em.textContent='تعذّر حفظ الملف.'}}
 
-function hp(s){var h=5381;s='sw|'+s;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return String(h)}
-function vLock(){document.getElementById('nav').innerHTML='';document.getElementById('app').innerHTML='<div class="card lock"><img class="lg" src="'+LOGO+'" alt=""><h2 style="text-align:center">🔒 أدخل الرقم السري</h2><input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="الرقم السري" onkeydown="if(event.keyCode==13)tryPin()"><div id="pe" class="hint neg"></div><button class="btn" onclick="tryPin()">دخول</button><button class="sm" style="margin-top:14px" onclick="forgot()">'+(fg?'اضغط مرة ثانية لحذف كل البيانات والبدء من جديد':'نسيت الرقم السري؟')+'</button></div>'}
-function tryPin(){var v=document.getElementById('pin').value;if(hp(v)===S.pin){unlocked=true;fg=0;render()}else{document.getElementById('pe').textContent='الرقم غير صحيح';document.getElementById('pin').value=''}}
-function forgot(){if(!fg){fg=1;vLock();return}try{localStorage.removeItem(KEY)}catch(e){}S={cur:'',br:[nb(0),nb(1)]};unlocked=true;fg=0;render()}
-function setPin(){var v=document.getElementById('np').value.trim();if(v.length<4){document.getElementById('pm').textContent='يجب ألا يقل الرقم السري عن 4 أحرف أو أرقام';return}S.pin=hp(v);unlocked=true;save();render()}
-function rmPin(){delete S.pin;save();render()}
 
+var hiddenAt=0;
+function pinKey(){return 'pin_'+user.uid}
+function pinOn(){try{return !!localStorage.getItem(pinKey())}catch(e){return false}}
+async function ph(p){var s=user.uid+':'+p;try{var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}catch(e){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return 'd'+h}}
+function vLock(){document.getElementById('nav').innerHTML='';document.getElementById('app').innerHTML='<div class="card lock"><img class="lg" src="'+LOGO+'" alt=""><h2 style="text-align:center">🔒 أدخل رقم الحماية</h2><input id="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" style="text-align:center;font-size:24px;letter-spacing:8px" oninput="chkPin()"><div id="pe" class="hint neg"></div><button class="sm" style="margin-top:14px" onclick="forgotPin()">نسيت الرقم؟ تسجيل الخروج</button></div>';setTimeout(function(){var i=document.getElementById('pin');if(i)i.focus()},50)}
+async function chkPin(){var i=document.getElementById('pin');if(!i||i.value.length<4)return;var h=await ph(i.value),m=document.getElementById('pe'),fk='pinfail_'+user.uid;
+ if(h===localStorage.getItem(pinKey())){unlocked=true;localStorage.removeItem(fk);render();return}
+ var c=(parseInt(localStorage.getItem(fk))||0)+1;localStorage.setItem(fk,c);i.value='';
+ if(c>=5){localStorage.removeItem(pinKey());localStorage.removeItem(fk);auth.signOut();return}
+ m.textContent='الرقم غير صحيح. المحاولات المتبقية: '+(5-c)}
+function forgotPin(){try{localStorage.removeItem(pinKey());localStorage.removeItem('pinfail_'+user.uid)}catch(e){}auth.signOut()}
+async function setPin2(){var v=document.getElementById('np').value.trim(),m=document.getElementById('pm');if(!/^\d{4}$/.test(v)){m.textContent='الرقم يجب أن يكون 4 أرقام';return}try{localStorage.setItem(pinKey(),await ph(v))}catch(e){m.textContent='تعذّر الحفظ على هذا الهاتف';return}unlocked=true;render()}
+function rmPin2(){try{localStorage.removeItem(pinKey())}catch(e){}render()}
+document.addEventListener('visibilitychange',function(){if(document.hidden){hiddenAt=Date.now()}else if(user&&hiddenAt&&Date.now()-hiddenAt>60000&&pinOn()){unlocked=false;render()}});
 function nav(){var t=[['today','📝 اليوم'],['rep','📊 التقرير'],['set','⚙️ الإعدادات']];
  document.getElementById('nav').innerHTML=t.map(function(a){return'<button class="'+(tab===a[0]?'on':'')+'" onclick="go(\''+a[0]+'\')">'+a[1]+'</button>'}).join('')}
 function go(t){tab=t;render()}
 function pick(i){sel=i;render()}
 function sw(){var h='<div class="row noprint" style="margin-bottom:10px">';S.br.forEach(function(b,i){h+='<button class="chip'+(sel===i?' on':'')+'" onclick="pick('+i+')">'+esc(b.n)+'</button>'});
  if(tab==='rep')h+='<button class="chip'+(sel==='all'?' on':'')+'" onclick="pick(\'all\')">الكل</button>';return h+'</div>'}
-function render(){if(typeof firebase==='undefined'||!auth||(user&&!loaded)||loadErr.indexOf('init')===0){vWait();return}if(!user){vLogin();return}if(sel==='all'&&tab!=='rep')sel=0;nav();
+function render(){if(typeof firebase!=='undefined'&&auth&&user&&pinOn()&&!unlocked){vLock();return}if(typeof firebase==='undefined'||!auth||(user&&!loaded)||loadErr.indexOf('init')===0){vWait();return}if(!user){vLogin();return}if(sel==='all'&&tab!=='rep')sel=0;nav();
  document.getElementById('app').innerHTML=sw()+(tab==='today'?vToday():tab==='rep'?vRep():vSet())}
 
 function vToday(){var b=cb(),o=b.d[date]||{a:0,pr:[0],co:[0],x:[]},c=dayCalc(o),fd=dfx(b,date),w=isW(b,date);
@@ -129,7 +137,7 @@ function vToday(){var b=cb(),o=b.d[date]||{a:0,pr:[0],co:[0],x:[]},c=dayCalc(o),
  h+='<div class="card"><h2>المبيعات اليومية</h2><label>مبلغ المبيعات اليوم</label><input type="number" inputmode="decimal" min="0" value="'+(n(o.a)||'')+'" placeholder="مثال: 1000" onchange="setA(this.value)"><div class="hint">'+(c.kg?'الكمية المباعة تقريباً: <b>'+(Math.round(c.kg*100)/100)+' كغ</b> (بسعر الكيلو '+fm(n(o.pr[0]))+')':(n(b.p.pr)?'':'أدخل سعر الكيلو في الإعدادات ليُحسب الوزن تلقائياً'))+'</div></div>';
  h+='<div class="card"><h2>مصاريف أخرى اليوم</h2>';
  (o.x||[]).forEach(function(e,i){h+='<div class="line"><span>'+esc(e.t||'مصروف')+' — <b>'+fm(n(e.a))+'</b></span><button class="sm" onclick="delX('+i+')">حذف</button></div>'});
- h+='<div class="row"><input id="xt" placeholder="البيان"><input id="xa" type="number" inputmode="decimal" placeholder="المبلغ"></div><button class="btn" onclick="addX()">+ إضافة مصروف</button></div>';
+ h+='<div class="row"><input id="xt" placeholder="البيان (مثل: كهرباء)"><input id="xa" type="number" inputmode="decimal" placeholder="المبلغ"></div><button class="btn" onclick="addX()">+ إضافة مصروف</button></div>';
  var net=c.gp-c.x-fd;
  h+='<div class="card"><h2>ملخص اليوم</h2><div class="line"><span>إجمالي المبيعات</span><b>'+fm(c.rev)+'</b></div><div class="line"><span>− تكلفة الإنتاج</span><b>'+fm(c.cost)+'</b></div><div class="line"><span>= الربح الإجمالي</span><b class="'+cl(c.gp)+'">'+fm(c.gp)+'</b></div><div class="line"><span>− مصاريف أخرى</span><b>'+fm(c.x)+'</b></div><div class="line"><span>− حصة اليوم من المصاريف الثابتة</span><b>'+fm(fd)+'</b></div><div class="line tot"><span>= الربح الصافي لليوم</span><b class="'+cl(net)+'">'+fm(net)+'</b></div><div class="hint">الحصة اليومية = مجموع المصاريف الثابتة للشهر ÷ عدد أيام العمل في الشهر ('+wdc(b,date.slice(0,7))+' يوم).</div></div>';
  return h}
@@ -145,7 +153,7 @@ function vRep(){
   R.forEach(function(r){var k=r[1],s=0;h+='<tr><td>'+r[0]+'</td>';m.forEach(function(t){s+=t[k];h+='<td'+(k==='net'||k==='gp'?' class="'+cl(t[k])+'"':'')+'>'+fm(t[k])+'</td>'});h+='<td'+(k==='net'||k==='gp'?' class="'+cl(s)+'"':'')+'><b>'+fm(s)+'</b></td></tr>'});
   h+='</table></div>'}
  else{var b=cb(),t=mon(b,month);
-  h+='<div class="card"><h2>'+esc(b.n)+' — الأرباح التقديرية</h2><div class="line"><span>إجمالي المبيعات</span><b>'+fm(t.rev)+'</b></div><div class="line"><span>الكمية المباعة (كغ)</span><b>'+(Math.round(t.kg*100)/100)+'</b></div><div class="line"><span>− تكلفة الإنتاج</span><b>'+fm(t.cost)+'</b></div><div class="line tot"><span>= الربح الإجمالي</span><b class="'+cl(t.gp)+'">'+fm(t.gp)+'</b></div><div class="line"><span>− إيجار المحل</span><b>'+fm(n(b.f.rent))+'</b></div><div class="line"><span>− العمال</span><b>'+fm(n(b.f.work))+'</b></div><div class="line"><span>− الكهرباء ('+fm(n(b.f.ewk))+' أسبوعياً)</span><b>'+fm(t.el)+'</b></div><div class="line"><span>− ثابتة أخرى</span><b>'+fm(n(b.f.oth))+'</b></div><div class="line"><span>− مصاريف أخرى (من اليوميات)</span><b>'+fm(t.x)+'</b></div><div class="line tot"><span>= الربح الصافي التقديري</span><b class="'+cl(t.net)+'">'+fm(t.net)+'</b></div><div class="hint">أيام العمل في هذا الشهر: '+wdc(b,month)+' يوم.</div></div>';
+  h+='<div class="card"><h2>'+esc(b.n)+' — الأرباح التقديرية</h2><div class="line"><span>إجمالي المبيعات</span><b>'+fm(t.rev)+'</b></div><div class="line"><span>الكمية المباعة (كغ)</span><b>'+(Math.round(t.kg*100)/100)+'</b></div><div class="line"><span>− تكلفة الإنتاج</span><b>'+fm(t.cost)+'</b></div><div class="line tot"><span>= الربح الإجمالي</span><b class="'+cl(t.gp)+'">'+fm(t.gp)+'</b></div><div class="line"><span>− إيجار المحل</span><b>'+fm(n(b.f.rent))+'</b></div><div class="line"><span>− العمال</span><b>'+fm(n(b.f.work))+'</b></div><div class="line"><span>− مصاريف أخرى (من اليوميات)</span><b>'+fm(t.x)+'</b></div><div class="line tot"><span>= الربح الصافي التقديري</span><b class="'+cl(t.net)+'">'+fm(t.net)+'</b></div><div class="hint">أيام العمل في هذا الشهر: '+wdc(b,month)+' يوم.</div></div>';
   h+='<div class="card tbl"><h2>تفصيل الأيام</h2>'+(t.rows?'<table><tr><th>اليوم</th><th>المبيعات</th><th>الربح الإجمالي</th><th>الصافي</th></tr>'+t.rows+'</table>':'<div class="hint">لا توجد مبيعات مسجلة لهذا الشهر.</div>')+'</div><div class="hint">الصافي اليومي = الربح الإجمالي − مصاريف اليوم − حصة اليوم من المصاريف الثابتة.</div>'}
  return h+'<button class="btn noprint" onclick="exportRep()">💾 حفظ التقرير (للطباعة PDF)</button><div class="hint noprint" id="em">يُحفظ ملف يُفتح في متصفح الجوال، ومنه تختار طباعة ثم حفظ كـ PDF.</div>'}
 
@@ -157,10 +165,11 @@ function vSet(){var b=cb(),s='S.br['+sel+']';
  '<div class="hint">تُحفظ الأسعار مع كل يوم عند إدخال المبيعات، فتغيير السعر لاحقاً لا يؤثر على الأيام السابقة.</div></div>';
  h+='<div class="card"><h2>أيام العمل</h2><div class="days">'+[6,0,1,2,3,4,5].map(function(d){return'<button class="chip'+(b.wd.indexOf(d)>-1?' on':'')+'" onclick="tg('+d+')">'+DN[d]+'</button>'}).join('')+'</div><div class="hint">الأيام غير المحددة عطلة ولا تُحسب لها مصاريف ثابتة.</div></div>';
  h+='<div class="card"><h2>المصاريف الثابتة</h2>';
- [['rent','إيجار المحل (شهرياً)'],['work','رواتب العمال (شهرياً)'],['ewk','الكهرباء (أسبوعياً)'],['oth','مصاريف ثابتة أخرى (شهرياً)']].forEach(function(a){h+='<label>'+a[1]+'</label><input type="number" inputmode="decimal" value="'+(n(b.f[a[0]])||'')+'" onchange="'+s+'.f.'+a[0]+'=n(this.value);save()">'});
- h+='<div class="hint">الكهرباء الأسبوعية تُحوَّل إلى الشهر بحسب عدد أيامه ÷ 7.</div></div>';
+ [['rent','إيجار المحل (شهرياً)'],['work','رواتب العمال (شهرياً)']].forEach(function(a){h+='<label>'+a[1]+'</label><input type="number" inputmode="decimal" value="'+(n(b.f[a[0]])||'')+'" onchange="'+s+'.f.'+a[0]+'=n(this.value);save()">'});
+ h+='<div class="hint">الكهرباء وأي مصاريف أخرى تُسجَّل يومياً من تبويب «اليوم» في يوم دفعها.</div></div>';
  h+='<div class="card"><label>رمز العملة (اختياري، لكل الفروع)</label><input value="'+esc(S.cur)+'" placeholder="مثال: ر.س" onchange="S.cur=this.value;save()"></div>';
  var up=false;try{up=!!localStorage.getItem(KEY)&&!localStorage.getItem(KEY+'_up')}catch(e){}
+ h+='<div class="card"><h2>🔒 رقم الحماية السريع</h2><div class="hint">خاص بهذا الهاتف وبحسابك فقط. يُطلب عند فتح التطبيق أو العودة إليه بعد دقيقة.</div>'+(pinOn()?'<div class="hint pos">الرقم مفعّل ✓</div>':'')+'<label>'+(pinOn()?'رقم جديد (4 أرقام)':'اختر رقماً من 4 أرقام')+'</label><input id="np" type="password" inputmode="numeric" maxlength="4" autocomplete="off"><div id="pm" class="hint neg"></div><button class="btn" onclick="setPin2()">'+(pinOn()?'تغيير الرقم':'تفعيل الرقم')+'</button>'+(pinOn()?'<button class="btn" style="background:var(--bad)" onclick="rmPin2()">إلغاء الرقم</button>':'')+'</div>';
  h+='<div class="card"><h2>👤 الحساب</h2><div class="hint" dir="ltr" style="text-align:right">'+esc(user.email)+'</div><button class="btn" style="background:var(--bad)" onclick="auth.signOut()">تسجيل الخروج</button></div>';
  if(up)h+='<div class="card"><h2>⬆️ رفع بيانات هذا الجهاز</h2><div class="hint">اضغط مرة واحدة فقط، من الهاتف الذي فيه بياناتك القديمة. لا تضغطه من هاتف آخر.</div><button class="btn" onclick="upLocal()">رفع البيانات إلى السحابة</button><div id="um" class="hint"></div></div>';
  return h}
